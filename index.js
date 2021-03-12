@@ -237,3 +237,45 @@ async function updateEmpRole() {
   questionsPrompt();
 }
 
+async function addRole() {
+  let deptQuery = await db.query(`SELECT * FROM department;`);
+  const departmentList = deptQuery.map(({ id, nameDepart }) => ({
+    name: nameDepart,
+    value: id,
+  }));
+
+  const addRoleQuestion = await inquirer.prompt([
+    { message: "What is the title of the role?", name: "title" },
+    { message: "What is the salary of this role?", name: "salary" },
+    {
+      type: "list",
+      message: "What is the department?",
+      name: "department_id",
+      choices: departmentList,
+    },
+  ]);
+
+  await db.query(
+    `INSERT INTO roles (title, salary, department_id) VALUES ('${addRoleQuestion.title}', '${addRoleQuestion.salary}', ${addRoleQuestion.department_id});`
+  );
+  console.table(`
+        -----------------------------------------------
+        [Role Added]: ${addRoleQuestion.title}
+        [Salary]: $${addRoleQuestion.salary} per year
+        -----------------------------------------------
+        `);
+  questionsPrompt();
+}
+
+async function addDepartment() {
+  const addDeptQuestion = await inquirer.prompt([
+    { message: "What is the department name?", name: "deptName" },
+  ]);
+  if (addDeptQuestion.deptName !== "") {
+    let deptDb = await db.query(
+      `INSERT INTO department (nameDepart) VALUES ('${addDeptQuestion.deptName}');`
+    );
+    console.log(`[Department]: ${addDeptQuestion.deptName} created`);
+  }
+  questionsPrompt();
+}

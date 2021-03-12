@@ -186,3 +186,54 @@ async function addEmployee() {
   questionsPrompt();
 }
 
+async function updateEmpRole() {
+  let empList = await db.query(`SELECT * FROM employee`);
+  const employees = empList.map(({ id, first_name, last_name }) => ({
+    name: `${first_name} ${last_name}`,
+    value: id,
+  }));
+  const employeeUpdate = await inquirer.prompt([
+    {
+      type: "list",
+      message: "Choose employee",
+      name: "chooseEmp",
+      choices: employees,
+    },
+  ]);
+
+  let roleList = await db.query(`SELECT * FROM roles`);
+  const employeesRole = roleList.map(({ id, title }) => ({
+    name: title,
+    value: id,
+  }));
+  const roleListQuestions = await inquirer.prompt([
+    {
+      type: "list",
+      message: "Choose a role",
+      name: "newRole",
+      choices: employeesRole,
+    },
+  ]);
+  if (roleList.length === 0) {
+    console.log(`
+    ---------------------------
+    There are no roles yet!
+    ---------------------------
+    `);
+  } else {
+    let roleChange = await db.query(
+      `UPDATE employee SET role_id = ${roleListQuestions.newRole} WHERE employee.id = ${employeeUpdate.chooseEmp}`
+    );
+    console.table(`
+  -------------------
+  ROLE UPDATED
+  -------------------
+  `);
+    let newEmpRole = await db.query(
+      `SELECT employee.id, employee.first_name, employee.last_name, roles.title, department.nameDepart AS department, roles.salary, CONCAT (manager.first_name, manager.last_name) AS manager FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN department ON roles.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id;`
+    );
+    console.table(newEmpRole);
+  }
+  questionsPrompt();
+}
+

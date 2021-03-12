@@ -144,3 +144,45 @@ async function viewAllEmpRoles() {
   questionsPrompt();
 }
 
+async function addEmployee() {
+  let rolesQuery = await db.query(`SELECT * FROM roles;`);
+  const rolesList = rolesQuery.map(({ id, title }) => ({
+    name: title,
+    value: id,
+  }));
+  let empQuery = await db.query(`SELECT * FROM employee;`);
+  const managerList = empQuery.map(({ id, first_name, last_name }) => ({
+    name: `${first_name} ${last_name}`,
+    value: id,
+  }));
+  managerList.push({ name: "None", value: null });
+
+  const addEmpQuestion = await inquirer.prompt([
+    { message: "What is the employees first name?", name: "first_name" },
+    { message: "What is the employees last name?", name: "last_name" },
+    {
+      type: "list",
+      message: "What is the employees role?",
+      name: "role_id",
+      choices: rolesList,
+    },
+    {
+      type: "list",
+      message: "Who is the manager of this employee?",
+      name: "manager_id",
+      choices: managerList,
+    },
+  ]);
+
+  console.table(`
+    ---------------------------------------------
+    [Employee Added]: ${addEmpQuestion.first_name}, ${addEmpQuestion.last_name}
+    ---------------------------------------------
+    `);
+
+  await db.query(
+    `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${addEmpQuestion.first_name}', '${addEmpQuestion.last_name}', '${addEmpQuestion.role_id}', ${addEmpQuestion.manager_id});`
+  );
+  questionsPrompt();
+}
+
